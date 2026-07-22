@@ -49,18 +49,56 @@
   }, { threshold: 0.6 });
   document.querySelectorAll('[data-count]').forEach(el => countIO.observe(el));
 
-  // Contact form (demo)
-  const form = document.querySelector('form[data-demo]');
+  // Contact form — opens the visitor's email client with a pre-filled message.
+  // mailto: has no way to detect success (silently does nothing if no desktop
+  // mail app is configured, which is common with webmail-only users), so we
+  // always reveal a copy-paste fallback alongside attempting it.
+  const form = document.querySelector('form[data-mailto]');
   if (form) {
     form.addEventListener('submit', (e) => {
       e.preventDefault();
-      const btn = form.querySelector('button[type=submit]');
-      const orig = btn.textContent;
-      btn.textContent = 'Message sent ✓';
-      btn.style.background = 'linear-gradient(120deg,#1f47b0,#48e6a0)';
-      form.reset();
-      setTimeout(() => { btn.textContent = orig; btn.style.background = ''; }, 2600);
+      const val = (id) => (form.querySelector('#' + id) || {}).value || '';
+      const name = val('name'), company = val('company'), email = val('email'), phone = val('phone');
+      const need = val('need'), sector = val('sector'), msg = val('msg');
+
+      const subject = `Export enquiry from ${name || 'website visitor'}`;
+      const bodyLines = [
+        `Name: ${name}`,
+        `Company: ${company}`,
+        `Email: ${email}`,
+        `Phone: ${phone}`,
+        `Interested in: ${need}`,
+        `Sector: ${sector}`,
+        '',
+        'Business & target market:',
+        msg,
+      ].join('\n');
+
+      const mailto = `mailto:info@saifeequantum.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(bodyLines)}`;
+      window.location.href = mailto;
+
+      const fallback = form.querySelector('[data-mailto-fallback]');
+      const textarea = form.querySelector('[data-mailto-body]');
+      if (fallback && textarea) {
+        textarea.value = `To: info@saifeequantum.com\nSubject: ${subject}\n\n${bodyLines}`;
+        fallback.hidden = false;
+      }
     });
+
+    const copyBtn = form.querySelector('[data-mailto-copy]');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', async () => {
+        const textarea = form.querySelector('[data-mailto-body]');
+        try {
+          await navigator.clipboard.writeText(textarea.value);
+          const orig = copyBtn.textContent;
+          copyBtn.textContent = 'Copied ✓';
+          setTimeout(() => { copyBtn.textContent = orig; }, 2000);
+        } catch {
+          textarea.select();
+        }
+      });
+    }
   }
 
   // Footer year
