@@ -67,6 +67,15 @@
   const y = document.querySelector('[data-year]');
   if (y) y.textContent = new Date().getFullYear();
 
+  // Tap-to-flip for the honeycomb hexes + team cards on touch devices
+  // (their flip is otherwise driven by :hover, which touch screens don't have)
+  const noHover = window.matchMedia('(hover: none)');
+  document.querySelectorAll('.hex, .team-card').forEach(el => {
+    el.addEventListener('click', () => {
+      if (noHover.matches) el.classList.toggle('is-flipped');
+    });
+  });
+
   // Scroll-spy: highlight the nav link for the section in view
   const navLinks = document.querySelectorAll('.nav-links a[href^="#"]');
   const sections = Array.from(navLinks)
