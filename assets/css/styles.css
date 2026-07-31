@@ -517,6 +517,11 @@ p { margin: 0; }
 .field input:focus, .field select:focus, .field textarea:focus { outline: none; border-color: var(--brand); background: #fff; box-shadow: 0 0 0 4px rgba(43,95,224,.12); }
 .field textarea { resize: vertical; min-height: 120px; }
 .form__note { font-size: 13px; color: var(--ink-faint); margin-top: 6px; }
+.form__status {
+  margin-top: 14px; padding: 14px 16px; border-radius: 12px; font-size: 14px; line-height: 1.5;
+}
+.form__status--ok { background: rgba(43,95,224,.08); border: 1px solid rgba(43,95,224,.18); color: var(--ink); }
+.form__status--err { background: rgba(217,58,58,.08); border: 1px solid rgba(217,58,58,.2); color: #a12f2f; }
 .form__fallback { margin-top: 14px; padding: 16px; border-radius: 12px; background: var(--grey-50); border: 1px solid var(--line); }
 .form__fallback p { font-size: 13px; color: var(--ink-soft); margin-bottom: 10px; }
 .form__fallback textarea {

@@ -49,12 +49,55 @@
   }, { threshold: 0.6 });
   document.querySelectorAll('[data-count]').forEach(el => countIO.observe(el));
 
-  // Contact form — opens the visitor's email client with a pre-filled message.
-  // mailto: has no way to detect success (silently does nothing if no desktop
-  // mail app is configured, which is common with webmail-only users), so we
-  // always reveal a copy-paste fallback alongside attempting it.
+  // Contact form — sends the enquiry (to info@saifeequantum.com) and an
+  // acknowledgment (to the visitor) via EmailJS, using the Outlook/Office 365
+  // mailbox connected in the EmailJS dashboard. Fill in the four constants
+  // below once that's set up: https://dashboard.emailjs.com
+  //   1. Email Services → Add New → Outlook/Office 365 → connect info@saifeequantum.com
+  //   2. Email Templates → create a "Notify" template (sent to info@) and an
+  //      "Acknowledge" template (sent to {{email}}) — see the drafts delivered
+  //      alongside this change for the copy to paste in.
+  //   3. Account → General → copy the Public Key.
+  // Until these are filled in, the form automatically falls back to the
+  // previous mailto: behaviour, so nothing breaks in the meantime.
+  const EMAILJS_PUBLIC_KEY = 'YOUR_PUBLIC_KEY';
+  const EMAILJS_SERVICE_ID = 'YOUR_SERVICE_ID';
+  const EMAILJS_TEMPLATE_NOTIFY = 'YOUR_NOTIFY_TEMPLATE_ID';
+  const EMAILJS_TEMPLATE_ACK = 'YOUR_ACK_TEMPLATE_ID';
+  const emailjsConfigured = ![EMAILJS_PUBLIC_KEY, EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_NOTIFY, EMAILJS_TEMPLATE_ACK]
+    .some(v => v.startsWith('YOUR_'));
+  if (emailjsConfigured && window.emailjs) {
+    emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
+  }
+
   const form = document.querySelector('form[data-mailto]');
   if (form) {
+    const statusEl = form.querySelector('[data-form-status]');
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const submitLabel = submitBtn ? submitBtn.innerHTML : '';
+
+    const showStatus = (kind, text) => {
+      if (!statusEl) return;
+      statusEl.textContent = text;
+      statusEl.className = 'form__status form__status--' + kind;
+      statusEl.hidden = false;
+    };
+
+    // mailto: has no way to detect success (silently does nothing if no
+    // desktop mail app is configured, which is common with webmail-only
+    // users), so we always reveal a copy-paste fallback alongside it.
+    const sendViaMailto = (name, subject, bodyLines) => {
+      const mailto = `mailto:info@saifeequantum.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(bodyLines)}`;
+      window.location.href = mailto;
+
+      const fallback = form.querySelector('[data-mailto-fallback]');
+      const textarea = form.querySelector('[data-mailto-body]');
+      if (fallback && textarea) {
+        textarea.value = `To: info@saifeequantum.com\nSubject: ${subject}\n\n${bodyLines}`;
+        fallback.hidden = false;
+      }
+    };
+
     form.addEventListener('submit', (e) => {
       e.preventDefault();
       const val = (id) => (form.querySelector('#' + id) || {}).value || '';
@@ -74,15 +117,26 @@
         msg,
       ].join('\n');
 
-      const mailto = `mailto:info@saifeequantum.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(bodyLines)}`;
-      window.location.href = mailto;
-
-      const fallback = form.querySelector('[data-mailto-fallback]');
-      const textarea = form.querySelector('[data-mailto-body]');
-      if (fallback && textarea) {
-        textarea.value = `To: info@saifeequantum.com\nSubject: ${subject}\n\n${bodyLines}`;
-        fallback.hidden = false;
+      if (!emailjsConfigured || !window.emailjs) {
+        sendViaMailto(name, subject, bodyLines);
+        return;
       }
+
+      const params = { name, company, email, phone, need, sector, msg, to_email: 'info@saifeequantum.com' };
+      if (submitBtn) { submitBtn.disabled = true; submitBtn.innerHTML = 'Sending…'; }
+
+      Promise.all([
+        emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_NOTIFY, params),
+        emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ACK, params),
+      ]).then(() => {
+        showStatus('ok', `Thanks${name ? ', ' + name : ''} — we've received your enquiry and sent a confirmation to ${email}. We usually respond within 24 business hours.`);
+        form.reset();
+      }).catch(() => {
+        showStatus('err', "We couldn't send that automatically, so we've opened your email client instead — or use the copy-paste option below.");
+        sendViaMailto(name, subject, bodyLines);
+      }).finally(() => {
+        if (submitBtn) { submitBtn.disabled = false; submitBtn.innerHTML = submitLabel; }
+      });
     });
 
     const copyBtn = form.querySelector('[data-mailto-copy]');

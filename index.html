@@ -29,6 +29,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="assets/css/styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 
   <script type="application/ld+json">
   {
@@ -455,7 +456,8 @@
         <button type="submit" class="btn btn--primary" style="width:100%; justify-content:center">Send enquiry
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </button>
-        <p class="form__note">Submitting opens your email client with this enquiry pre-filled, addressed to info@saifeequantum.com.</p>
+        <p class="form__note">We usually respond within 24 business hours. You'll get a confirmation email as soon as we receive your enquiry.</p>
+        <div class="form__status" data-form-status hidden></div>
         <div class="form__fallback" data-mailto-fallback hidden>
           <p>If your email app didn't open, copy this and send it to <a href="mailto:info@saifeequantum.com">info@saifeequantum.com</a>:</p>
           <textarea data-mailto-body readonly rows="6"></textarea>
